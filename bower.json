@@ -1,0 +1,25 @@
+{
+  "name": "embla-carousel-hdw",
+  "description": "A lightweight carousel library with fluid motion and great swipe precision",
+  "main": "packages/embla-carousel/embla-carousel.umd.js",
+  "authors": [
+    "David Cetinkaya"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "embla",
+    "carousel",
+    "fork",
+    "hdw",
+    "slider"
+  ],
+  "homepage": "https://github.com/hdw-werbeagentur/embla-carousel",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
