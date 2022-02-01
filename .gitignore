@@ -1,11 +1,12 @@
 # production
 packages/embla-carousel/index.d.ts
-packages/embla-carousel/embla-carousel.*
-packages/embla-carousel/embla-carousel-vanilla
-packages/embla-carousel/embla-carousel-react
-packages/embla-carousel/react
-packages/embla-carousel/react.*
+packages/embla-carousel*/
 public
+
+!packages/embla-carousel/embla-carousel.js
+!packages/embla-carousel-auto-height/embla-carousel-auto-height.js
+!packages/embla-carousel-autoplay/embla-carousel-autoplay.js
+!packages/embla-carousel-class-names/embla-carousel-class-names.js
 
 # logs
 npm-debug.log*
