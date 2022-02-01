@@ -4,9 +4,11 @@ packages/embla-carousel*/*
 public
 
 !embla-carousel.js
+!embla-carousel.umd.js
 !embla-carousel-auto-height.js
-!embla-carousel-autoplay.js
-!embla-carousel-class-names.js
+!embla-carousel-auto-height.umd.js
+!embla-carousel-autoplay.umd.js
+!embla-carousel-class-names.umd.js
 
 # logs
 npm-debug.log*
