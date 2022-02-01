@@ -1,12 +1,12 @@
 # production
-packages/embla-carousel/index.d.ts
-packages/embla-carousel*/
+packages/embla-carousel*/*
+*.ts
 public
 
-!packages/embla-carousel/embla-carousel.js
-!packages/embla-carousel-auto-height/embla-carousel-auto-height.js
-!packages/embla-carousel-autoplay/embla-carousel-autoplay.js
-!packages/embla-carousel-class-names/embla-carousel-class-names.js
+!embla-carousel.js
+!embla-carousel-auto-height.js
+!embla-carousel-autoplay.js
+!embla-carousel-class-names.js
 
 # logs
 npm-debug.log*
@@ -14,7 +14,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # dependencies
-node_modules
+node_modules/
 .pnp
 .pnp.js
 
