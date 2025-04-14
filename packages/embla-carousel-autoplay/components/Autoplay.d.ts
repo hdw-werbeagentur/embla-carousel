@@ -7,6 +7,9 @@ declare module 'embla-carousel' {
     interface EmblaEventListType {
         autoplayPlay: 'autoplay:play';
         autoplayStop: 'autoplay:stop';
+        autoplaySelect: 'autoplay:select';
+        autoplayTimerSet: 'autoplay:timerset';
+        autoplayTimerStopped: 'autoplay:timerstopped';
     }
 }
 export type AutoplayType = CreatePluginType<{
@@ -14,6 +17,7 @@ export type AutoplayType = CreatePluginType<{
     stop: () => void;
     reset: () => void;
     isPlaying: () => boolean;
+    timeUntilNext: () => number | null;
 }, OptionsType>;
 export type AutoplayOptionsType = AutoplayType['options'];
 declare function Autoplay(userOptions?: AutoplayOptionsType): AutoplayType;

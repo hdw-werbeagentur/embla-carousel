@@ -157,12 +157,14 @@ export function Engine(
   const slideIndexes = arrayKeys(slides)
 
   // Animation
-  const update: AnimationsUpdateType = (
-    { dragHandler, scrollBody, scrollBounds, options: { loop } },
-    timeStep
-  ) => {
+  const update: AnimationsUpdateType = ({
+    dragHandler,
+    scrollBody,
+    scrollBounds,
+    options: { loop }
+  }) => {
     if (!loop) scrollBounds.constrain(dragHandler.pointerDown())
-    scrollBody.seek(timeStep)
+    scrollBody.seek()
   }
 
   const render: AnimationsRenderType = (
@@ -171,6 +173,7 @@ export function Engine(
       translate,
       location,
       offsetLocation,
+      previousLocation,
       scrollLooper,
       slideLooper,
       dragHandler,
@@ -179,20 +182,17 @@ export function Engine(
       scrollBounds,
       options: { loop }
     },
-    lagOffset
+    alpha
   ) => {
     const shouldSettle = scrollBody.settled()
     const withinBounds = !scrollBounds.shouldConstrain()
     const hasSettled = loop ? shouldSettle : shouldSettle && withinBounds
+    const hasSettledAndIdle = hasSettled && !dragHandler.pointerDown()
 
-    if (hasSettled && !dragHandler.pointerDown()) {
-      animation.stop()
-      eventHandler.emit('settle')
-    }
-    if (!hasSettled) eventHandler.emit('scroll')
+    if (hasSettledAndIdle) animation.stop()
 
     const interpolatedLocation =
-      location.get() * lagOffset + previousLocation.get() * (1 - lagOffset)
+      location.get() * alpha + previousLocation.get() * (1 - alpha)
 
     offsetLocation.set(interpolatedLocation)
 
@@ -202,12 +202,16 @@ export function Engine(
     }
 
     translate.to(offsetLocation.get())
+
+    if (hasSettledAndIdle) eventHandler.emit('settle')
+    if (!hasSettled) eventHandler.emit('scroll')
   }
+
   const animation = Animations(
     ownerDocument,
     ownerWindow,
-    (timeStep) => update(engine, timeStep),
-    (lagOffset: number) => render(engine, lagOffset)
+    () => update(engine),
+    (alpha: number) => render(engine, alpha)
   )
 
   // Shared

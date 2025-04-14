@@ -9,7 +9,6 @@ function Fade(userOptions = {}) {
   const fullOpacity = 1;
   const noOpacity = 0;
   const fadeFriction = 0.68;
-  const timeStep = 1000 / 60;
   let emblaApi;
   let opacities = [];
   let fadeToNextDistance;
@@ -176,9 +175,8 @@ function Fade(userOptions = {}) {
       dragHandler,
       scrollBody
     } = emblaApi.internalEngine();
-    const fixedDeltaTimeSeconds = timeStep / 1000;
     const pointerDown = dragHandler.pointerDown();
-    const velocity = scrollBody.velocity() * fixedDeltaTimeSeconds;
+    const velocity = scrollBody.velocity();
     const duration = scrollBody.duration();
     const fadeIndex = getFadeIndex();
     const noFadeIndex = !isNumber(fadeIndex);

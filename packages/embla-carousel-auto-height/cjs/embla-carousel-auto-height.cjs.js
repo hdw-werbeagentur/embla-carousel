@@ -28,9 +28,12 @@ function AutoHeight(userOptions = {}) {
       slideRegistry
     } = emblaApi.internalEngine();
     const selectedIndexes = slideRegistry[emblaApi.selectedScrollSnap()];
+    if (!selectedIndexes) return null;
     return selectedIndexes.map(index => slideHeights[index]).reduce((a, b) => Math.max(a, b), 0);
   }
   function setContainerHeight() {
+    const height = highestInView();
+    if (height === null) return;
     emblaApi.containerNode().style.height = `${highestInView()}px`;
   }
   const self = {

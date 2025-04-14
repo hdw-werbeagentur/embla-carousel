@@ -1,4 +1,5 @@
 import { CreateOptionsType } from 'embla-carousel';
+export type RootNodeType = null | ((emblaRoot: HTMLElement) => HTMLElement | null);
 export type OptionsType = CreateOptionsType<{
     direction: 'forward' | 'backward';
     speed: number;
@@ -7,6 +8,6 @@ export type OptionsType = CreateOptionsType<{
     stopOnFocusIn: boolean;
     stopOnInteraction: boolean;
     stopOnMouseEnter: boolean;
-    rootNode: ((emblaRoot: HTMLElement) => HTMLElement | null) | null;
+    rootNode: RootNodeType;
 }>;
 export declare const defaultOptions: OptionsType;

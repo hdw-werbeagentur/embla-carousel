@@ -13,14 +13,19 @@ const defaultOptions = {
   rootNode: null
 };
 
+function getAutoScrollRootNode(emblaApi, rootNode) {
+  const emblaRootNode = emblaApi.rootNode();
+  return rootNode && rootNode(emblaRootNode) || emblaRootNode;
+}
+
 function AutoScroll(userOptions = {}) {
   let options;
   let emblaApi;
   let destroyed;
-  let playing = false;
-  let resume = true;
-  let timer = 0;
   let startDelay;
+  let timerId = 0;
+  let autoScrollActive = false;
+  let mouseIsOver = false;
   let defaultScrollBehaviour;
   function init(emblaApiInstance, optionsHandler) {
     emblaApi = emblaApiInstance;
@@ -38,71 +43,60 @@ function AutoScroll(userOptions = {}) {
     const {
       eventStore
     } = emblaApi.internalEngine();
-    const emblaRoot = emblaApi.rootNode();
-    const root = options.rootNode && options.rootNode(emblaRoot) || emblaRoot;
-    const container = emblaApi.containerNode();
-    emblaApi.on('pointerDown', stopScroll);
-    if (!options.stopOnInteraction) {
-      emblaApi.on('pointerUp', startScrollOnSettle);
+    const isDraggable = !!emblaApi.internalEngine().options.watchDrag;
+    const root = getAutoScrollRootNode(emblaApi, options.rootNode);
+    if (isDraggable) {
+      emblaApi.on('pointerDown', pointerDown);
+    }
+    if (isDraggable && !options.stopOnInteraction) {
+      emblaApi.on('pointerUp', pointerUp);
     }
     if (options.stopOnMouseEnter) {
-      eventStore.add(root, 'mouseenter', () => {
-        resume = false;
-        stopScroll();
-      });
-      if (!options.stopOnInteraction) {
-        eventStore.add(root, 'mouseleave', () => {
-          resume = true;
-          startScroll();
-        });
-      }
+      eventStore.add(root, 'mouseenter', mouseEnter);
+    }
+    if (options.stopOnMouseEnter && !options.stopOnInteraction) {
+      eventStore.add(root, 'mouseleave', mouseLeave);
     }
     if (options.stopOnFocusIn) {
-      emblaApi.on('slideFocusStart', stopScroll);
-      if (!options.stopOnInteraction) {
-        eventStore.add(container, 'focusout', startScroll);
-      }
+      emblaApi.on('slideFocusStart', stopAutoScroll);
     }
-    if (options.playOnInit) startScroll();
+    if (options.stopOnFocusIn && !options.stopOnInteraction) {
+      eventStore.add(emblaApi.containerNode(), 'focusout', startAutoScroll);
+    }
+    if (options.playOnInit) startAutoScroll();
   }
   function destroy() {
-    emblaApi.off('pointerDown', stopScroll).off('pointerUp', startScrollOnSettle).off('slideFocusStart', stopScroll).off('settle', onSettle);
-    stopScroll();
+    emblaApi.off('pointerDown', pointerDown).off('pointerUp', pointerUp).off('slideFocusStart', stopAutoScroll).off('settle', settle);
+    stopAutoScroll();
     destroyed = true;
-    playing = false;
+    autoScrollActive = false;
   }
-  function startScroll() {
-    if (destroyed || playing) return;
-    if (!resume) return;
+  function startAutoScroll() {
+    if (destroyed) return;
+    if (autoScrollActive) return;
     emblaApi.emit('autoScroll:play');
     const engine = emblaApi.internalEngine();
     const {
       ownerWindow
     } = engine;
-    timer = ownerWindow.setTimeout(() => {
+    timerId = ownerWindow.setTimeout(() => {
       engine.scrollBody = createAutoScrollBehaviour(engine);
       engine.animation.start();
     }, startDelay);
-    playing = true;
+    autoScrollActive = true;
   }
-  function stopScroll() {
-    if (destroyed || !playing) return;
+  function stopAutoScroll() {
+    if (destroyed) return;
+    if (!autoScrollActive) return;
     emblaApi.emit('autoScroll:stop');
     const engine = emblaApi.internalEngine();
     const {
       ownerWindow
     } = engine;
     engine.scrollBody = defaultScrollBehaviour;
-    ownerWindow.clearTimeout(timer);
-    timer = 0;
-    playing = false;
-  }
-  function onSettle() {
-    if (resume) startScroll();
-    emblaApi.off('settle', onSettle);
-  }
-  function startScrollOnSettle() {
-    emblaApi.on('settle', onSettle);
+    ownerWindow.clearTimeout(timerId);
+    timerId = 0;
+    autoScrollActive = false;
   }
   function createAutoScrollBehaviour(engine) {
     const {
@@ -129,13 +123,12 @@ function AutoScroll(userOptions = {}) {
     let rawLocation = location.get();
     let rawLocationPrevious = 0;
     let hasSettled = false;
-    function seek(timeStep) {
-      const fixedDeltaTimeSeconds = timeStep / 1000;
+    function seek() {
       let directionDiff = 0;
       previousLocation.set(location);
-      bodyVelocity = directionSign * options.speed * 55;
+      bodyVelocity = directionSign * options.speed;
       rawLocation += bodyVelocity;
-      location.add(bodyVelocity * fixedDeltaTimeSeconds);
+      location.add(bodyVelocity);
       target.set(location);
       directionDiff = rawLocation - rawLocationPrevious;
       scrollDirection = Math.sign(directionDiff);
@@ -152,7 +145,7 @@ function AutoScroll(userOptions = {}) {
         const constrainedLocation = constrain(location.get());
         location.set(constrainedLocation);
         target.set(location);
-        stopScroll();
+        stopAutoScroll();
       }
       return self;
     }
@@ -169,24 +162,44 @@ function AutoScroll(userOptions = {}) {
     };
     return self;
   }
+  function pointerDown() {
+    if (!mouseIsOver) stopAutoScroll();
+  }
+  function pointerUp() {
+    if (!mouseIsOver) startAutoScrollOnSettle();
+  }
+  function mouseEnter() {
+    mouseIsOver = true;
+    stopAutoScroll();
+  }
+  function mouseLeave() {
+    mouseIsOver = false;
+    startAutoScroll();
+  }
+  function settle() {
+    emblaApi.off('settle', settle);
+    startAutoScroll();
+  }
+  function startAutoScrollOnSettle() {
+    emblaApi.on('settle', settle);
+  }
   function play(startDelayOverride) {
     if (typeof startDelayOverride !== 'undefined') {
       startDelay = startDelayOverride;
     }
-    resume = true;
-    startScroll();
+    startAutoScroll();
   }
   function stop() {
-    if (playing) stopScroll();
+    if (autoScrollActive) stopAutoScroll();
   }
   function reset() {
-    if (playing) {
-      stopScroll();
-      startScrollOnSettle();
+    if (autoScrollActive) {
+      stopAutoScroll();
+      startAutoScrollOnSettle();
     }
   }
   function isPlaying() {
-    return playing;
+    return autoScrollActive;
   }
   const self = {
     name: 'autoScroll',
